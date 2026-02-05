@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # ===============================
 # 0. 이미지 로드
 # ===============================
-img = cv2.imread("image2.png")
+img = cv2.imread("DT_peak_method\Sample_1.png")
 assert img is not None, "이미지를 불러올 수 없습니다."
 orig = img.copy()
 
@@ -167,10 +167,10 @@ for (y, x) in filtered_peaks:
 
     # 감염 판별 (어두울수록 감염)
     if mean_intensity <= INFECTED_MEAN_THRESHOLD:
-        color = (0, 255, 0)   # 🔴 감염
+        color = (0, 255, 0)   # 감염
         infected_count += 1
     else:
-        color = (0, 255, 0)   # 🟢 정상
+        color = (0, 255, 0)   # 정상
 
     cv2.circle(output, (x, y), ROI_RADIUS, color, 1)
     rbc_count += 1
@@ -206,7 +206,7 @@ ax[1,0].set_title("Binary mask")
 im = ax[1,1].imshow(dist, cmap="jet")
 ax[1,1].set_title("Distance Transform")
 
-plt.colorbar(im, ax=ax[1,1])
+#plt.colorbar(im, ax=ax[1,1])
 
 ax[0,1].imshow(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
 ax[0,1].set_title(f"Count green-circle (Count = {rbc_count}) (Infected = {infected_count})")

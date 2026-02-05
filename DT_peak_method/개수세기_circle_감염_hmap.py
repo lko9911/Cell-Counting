@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # ===============================
 # 0. 이미지 로드
 # ===============================
-img = cv2.imread("image2.png")
+img = cv2.imread("DT_peak_method\Sample_2.png")
 assert img is not None, "이미지를 불러올 수 없습니다."
 orig = img.copy()
 
@@ -133,7 +133,6 @@ if infected_rois:
     if n_show == 1: ax = ax.reshape(2, 1)
 
     # --- 핵심 설정 ---
-    # 어두움의 기준 (0~255): 이 값보다 '더 어두운' 픽셀만 추출합니다.
     DARK_CUT_OFF = 80 
     # ----------------
 

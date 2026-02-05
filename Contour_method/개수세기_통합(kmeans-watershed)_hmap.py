@@ -5,18 +5,18 @@ import matplotlib.pyplot as plt
 # ===============================
 # 0. 이미지 로드
 # ===============================
-img = cv2.imread("Contour_method\Sample_2.png")
+img = cv2.imread("Contour_method/Sample_1.png")
 assert img is not None, "이미지를 불러올 수 없습니다."
 
 orig = img.copy()
 
 # ===============================
-# 1. Grayscale
+# 1. Grayscale + Blur
 # ===============================
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # ===============================
-# 2. k-means (배경 / 적혈구 분리)
+# 2. K-means (배경 / RBC 분리)
 # ===============================
 Z = gray.reshape((-1, 1)).astype(np.float32)
 
@@ -29,6 +29,7 @@ _, labels, centers = cv2.kmeans(
 
 segmented = centers[labels.flatten()].reshape(gray.shape)
 segmented = segmented.astype(np.uint8)
+
 
 # ===============================
 # 3. Binary mask (적혈구 = 흰색)
@@ -45,6 +46,17 @@ mask = np.zeros((h + 2, w + 2), np.uint8)
 
 binary_filled = binary.copy()
 mask = np.zeros((h + 2, w + 2), np.uint8)
+# ===============================
+# 4. Morphology + Contour 정제
+# ===============================
+kernel = np.ones((3, 3), np.uint8)
+opening = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=2)
+
+binary_final = np.zeros_like(opening)
+cnts, _ = cv2.findContours(opening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+for cnt in cnts:
+    if cv2.contourArea(cnt) > 30:
+        cv2.drawContours(binary_final, [cnt], -1, 255, -1)
 
 # 테두리 전체를 seed로 flood fill
 for x in range(w):
@@ -83,7 +95,6 @@ for cnt in cnts:
 
 binary = binary_filled
 
-
 # ===============================
 # 5. Distance Transform
 # ===============================
@@ -109,13 +120,14 @@ markers[unknown == 255] = 0
 markers = cv2.watershed(img, markers)
 
 # ===============================
-# 8. Contour 추출 & 감염 판별
+# 8. Contour 분석 & 감염 판별
 # ===============================
-INFECTED_MEAN_THRESHOLD = 180 # ← 튜닝용
+INFECTED_MEAN_THRESHOLD = 180
 
 output = orig.copy()
 rbc_count = 0
 infected_count = 0
+infected_rois = []
 
 for label in np.unique(markers):
     if label <= 1:
@@ -124,61 +136,78 @@ for label in np.unique(markers):
     mask = np.zeros(gray.shape, dtype="uint8")
     mask[markers == label] = 255
 
-    cnts, _ = cv2.findContours(
-        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
-
-    if len(cnts) == 0:
+    cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not cnts:
         continue
 
     cnt = max(cnts, key=cv2.contourArea)
-
     area = cv2.contourArea(cnt)
     if area < 30:
         continue
 
-    # 평균 픽셀값
     mean_intensity = cv2.mean(gray, mask=mask)[0]
 
-    # 감염 여부
     if mean_intensity <= INFECTED_MEAN_THRESHOLD:
-        color = (255, 0, 0)   # 감염
+        color = (255, 0, 0)   # infected
         infected_count += 1
+
+        x, y, w, h = cv2.boundingRect(cnt)
+        infected_rois.append(gray[y:y+h, x:x+w])
     else:
-        color = (0, 255, 0)   # 정상
+        color = (0, 255, 0)   # normal
 
     cv2.drawContours(output, [cnt], -1, color, 1)
     rbc_count += 1
 
-print("총 적혈구 수:", rbc_count)
-print("감염된 적혈구 수:", infected_count)
+print(f"Total RBC: {rbc_count}")
+print(f"Infected RBC: {infected_count}")
 
-
-# ===============================
-# 9. 결과 시각화
-# ===============================
-fig, ax = plt.subplots(2, 3, figsize=(15, 10))
-
-ax[0,0].imshow(cv2.cvtColor(orig, cv2.COLOR_BGR2RGB))
-ax[0,0].set_title("Original")
-
-ax[0,1].imshow(gray, cmap="gray")
-ax[0,1].set_title("Grayscale")
-
-ax[0,2].imshow(binary, cmap="gray")
-ax[0,2].set_title("Binary (Hole Filled)")
-
-ax[1,0].imshow(binary, cmap="gray")
-ax[1,0].set_title("Binary mask")
-
-ax[1,1].imshow(dist, cmap="jet")
-ax[1,1].set_title("Distance Transform")
-
-ax[1,2].imshow(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
-ax[1,2].set_title(f"Count green-contour (Count = {rbc_count}) (Infected = {infected_count})")
-
-for a in ax.flatten():
-    a.axis("off")
-
+# [1] 전체 분석 결과
+fig, ax = plt.subplots(1, 2, figsize=(16, 8))
+ax[0].imshow(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
+ax[0].set_title(f"Detection: Total={rbc_count}, Infected={infected_count}")
+ax[1].imshow(dist, cmap="jet")
+ax[1].set_title("Distance Transform (Peaks)")
+for a in ax: a.axis("off")
 plt.tight_layout()
 plt.show()
+
+# ===============================
+# 9. 감염 RBC 히트맵 시각화
+# ===============================
+if infected_rois:
+    n_show = min(len(infected_rois), 6)
+    fig, ax = plt.subplots(2, n_show, figsize=(3 * n_show, 6))
+    if n_show == 1: ax = ax.reshape(2, 1)
+
+    # --- 핵심 설정 ---
+    DARK_CUT_OFF = 180 
+    # ----------------
+
+    for i in range(n_show):
+        # 1. 원본 그레이스케일 표시
+        ax[0, i].imshow(infected_rois[i], cmap="gray")
+        ax[0, i].set_title(f"Infected #{i+1}")
+
+        # 2. 어두운 특이점 추출 (역전 없음)
+        roi_target = infected_rois[i].copy()
+        
+        # 마스크 생성: DARK_CUT_OFF보다 밝은 부분은 제외
+        mask = roi_target < DARK_CUT_OFF
+        
+        # 배경은 매우 밝게(255) 처리하거나, 혹은 0으로 두고 관심 영역만 유지
+        # 여기서는 '어두운 점'을 강조하기 위해 나머지 영역을 255(흰색)로 채웁니다.
+        roi_refined = np.full_like(roi_target, 255) 
+        roi_refined[mask] = roi_target[mask] 
+
+        # 3. 히트맵 시각화
+        # 역전(255-)을 하지 않았으므로, 가장 어두운 점이 히트맵에서도 가장 낮은 값을 가집니다.
+        im = ax[1, i].imshow(roi_refined, cmap="magma")
+        ax[1, i].set_title(f"Infected Cell Pattern")
+        
+    for a in ax.flatten():
+        a.axis("off")
+        
+    plt.suptitle("Refined Heatmap: Natural Dark Points (No Inversion)", fontsize=16)
+    plt.tight_layout()
+    plt.show()
