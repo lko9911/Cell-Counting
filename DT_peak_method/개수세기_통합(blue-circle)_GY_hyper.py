@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # ===============================
 # 0. 이미지 로드
 # ===============================
-img = cv2.imread("DT_peak_method\Sample_1.png")
+img = cv2.imread("DT_peak_method\Sample_2.png")
 assert img is not None, "이미지를 불러올 수 없습니다."
 orig = img.copy()
 

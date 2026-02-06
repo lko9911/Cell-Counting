@@ -13,47 +13,62 @@ orig = img.copy()
 # 1. Grayscale & Preprocessing
 # ===============================
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-# 미세 노이즈 제거를 위한 블러링 추가
-blurred = cv2.GaussianBlur(gray, (3, 3), 0)
 
 # ===============================
-# 2. k-means (배경/세포 분리)
+# 2. k-means
 # ===============================
-Z = blurred.reshape((-1, 1)).astype(np.float32)
+Z = gray.reshape((-1, 1)).astype(np.float32)
 K = 2
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-_, labels, centers = cv2.kmeans(Z, K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
 
-cell_cluster = np.argmin(centers)
+_, labels, centers = cv2.kmeans(
+    Z, K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS
+)
+segmented = centers[labels.flatten()].reshape(gray.shape).astype(np.uint8)
+
+# ===============================
+# 3. Binary mask
+# ===============================
+#_, binary = cv2.threshold(
+#    segmented, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+#)
+
+cell_cluster = np.argmin(centers)  # 더 어두운 클러스터
 binary = (labels.reshape(gray.shape) == cell_cluster).astype(np.uint8) * 255
 
-# ===============================
-# 3. Hole filling (적혈구 내부 채우기)
-# ===============================
-h, w = binary.shape
-binary_filled = binary.copy()
-mask = np.zeros((h + 2, w + 2), np.uint8)
-# 외곽을 흰색으로 채운 뒤 반전시켜 내부 구멍만 추출
-cv2.floodFill(binary_filled, mask, (0, 0), 255)
-binary_filled_inv = cv2.bitwise_not(binary_filled)
-binary = binary | binary_filled_inv
 
 # ===============================
-# 4. Morphology & Contour (강제 채우기 및 정제)
+# 4. Morphology
 # ===============================
 kernel = np.ones((3, 3), np.uint8)
 opening = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=2)
 
-binary_final = np.zeros_like(opening)
-cnts, _ = cv2.findContours(opening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-for cnt in cnts:
-    if cv2.contourArea(cnt) > 30:
-        cv2.drawContours(binary_final, [cnt], -1, 255, -1)
+# ===============================
+# 3-1. Hole filling (적혈구 내부 구멍 제거)
+# ===============================
+h, w = binary.shape
+mask = np.zeros((h + 2, w + 2), np.uint8)
+
+binary_filled = binary.copy()
+mask = np.zeros((h + 2, w + 2), np.uint8)
+
+# 테두리 전체를 seed로 flood fill
+for x in range(w):
+    cv2.floodFill(binary_filled, mask, (x, 0), 255)
+    cv2.floodFill(binary_filled, mask, (x, h-1), 255)
+
+for y in range(h):
+    cv2.floodFill(binary_filled, mask, (0, y), 255)
+    cv2.floodFill(binary_filled, mask, (w-1, y), 255)
+
+binary_filled_inv = cv2.bitwise_not(binary_filled)
+binary = binary | binary_filled_inv
 
 # ===============================
 # 5. Distance Transform & Peak Detection
 # ===============================
-dist = cv2.distanceTransform(binary_final, cv2.DIST_L2, 5)
+dist = cv2.distanceTransform(opening, cv2.DIST_L2, 5)
+
 min_peak_ratio = 0.20
 local_max = (cv2.dilate(dist, np.ones((3, 3))) == dist) & (dist > min_peak_ratio * dist.max())
 num_peaks, peak_labels = cv2.connectedComponents(local_max.astype(np.uint8))
@@ -160,6 +175,6 @@ if infected_rois:
     for a in ax.flatten():
         a.axis("off")
         
-    plt.suptitle("Refined Heatmap: Natural Dark Points (No Inversion)", fontsize=16)
+    plt.suptitle("Infected pattern", fontsize=16)
     plt.tight_layout()
     plt.show()
