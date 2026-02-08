@@ -40,7 +40,9 @@ Project/
 │   └── 개수세기_통합(kmeans-watershed)_hmap.py
 ├── DT_peak_method/
 │   ├── 개수세기_circle_감염_hmap.py
-│   └── 개수세기_통합(blue-circle)_GY_hyper.py         
+│   └── 개수세기_통합(blue-circle)_GY_hyper.py    
+├── Dummy/ # 필요없는 파일 모음 (무시하기)    
+├── requirements.txt
 ├──.gitignore
 └── README.md
 ```
