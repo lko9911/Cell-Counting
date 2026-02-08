@@ -49,7 +49,7 @@ Project/
 
 ## ⚙️ Installation
 ```bash
-git clone https://github.com/yourname/project-name.git
-cd project-name
+git clone https://github.com/lko9911/Cell-Counting.git
+cd Cell-Counting
 pip install -r requirements.txt
 ```
