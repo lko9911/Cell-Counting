@@ -43,3 +43,13 @@ Project/
 │   └── 개수세기_통합(blue-circle)_GY_hyper.py         
 ├──.gitignore
 └── README.md
+```
+
+---
+
+## ⚙️ Installation
+```bash
+git clone https://github.com/yourname/project-name.git
+cd project-name
+pip install -r requirements.txt
+```
