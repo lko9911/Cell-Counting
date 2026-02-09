@@ -11,7 +11,7 @@ assert img is not None, "이미지를 불러올 수 없습니다."
 orig = img.copy()
 
 # ===============================
-# 1. Grayscale + Blur
+# 1. Grayscale 
 # ===============================
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -30,7 +30,6 @@ _, labels, centers = cv2.kmeans(
 segmented = centers[labels.flatten()].reshape(gray.shape)
 segmented = segmented.astype(np.uint8)
 
-
 # ===============================
 # 3. Binary mask (적혈구 = 흰색)
 # ===============================
@@ -39,13 +38,14 @@ _, binary = cv2.threshold(
 )
 
 # ===============================
-# 3-1. Hole filling (적혈구 내부 구멍 제거)
+# 3-1. Hole filling (적혈구 내부 구멍 제거 준비)
 # ===============================
 h, w = binary.shape
 mask = np.zeros((h + 2, w + 2), np.uint8)
 
 binary_filled = binary.copy()
 mask = np.zeros((h + 2, w + 2), np.uint8)
+
 # ===============================
 # 4. Morphology + Contour 정제
 # ===============================
@@ -180,7 +180,7 @@ if infected_rois:
     fig, ax = plt.subplots(2, n_show, figsize=(3 * n_show, 6))
     if n_show == 1: ax = ax.reshape(2, 1)
 
-    # --- 핵심 설정 ---
+    # --- 핵심 설정 (이 값에 따라서 감염 패턴 검출할 수 있습니다.) ---
     DARK_CUT_OFF = 180 
     # ----------------
 
