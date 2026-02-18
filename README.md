@@ -21,7 +21,6 @@ Cell Counting 관련 코드 정리
 
   
 - ✅ DT_peak_method
-<img width="4244" height="1355" alt="그림1" src="https://github.com/user-attachments/assets/b7f21a8d-6fc9-4626-88f8-a7c443b305a0" />
 <img width="1463" height="988" alt="스크린샷 2026-02-18 100800" src="https://github.com/user-attachments/assets/4aaa7985-0033-415d-8a30-c4a8d008acab" />
 <img width="1147" height="586" alt="dt" src="https://github.com/user-attachments/assets/c9a4f432-428e-405a-946c-3174a35e39fb" />
 
@@ -29,7 +28,6 @@ Cell Counting 관련 코드 정리
 
   
 - ✅ Countour_method
-<img width="4196" height="1368" alt="그림3" src="https://github.com/user-attachments/assets/ceba599d-11a3-4096-8fc5-b6e550247c72" />
 <img width="1533" height="976" alt="스크린샷 2026-02-18 100652" src="https://github.com/user-attachments/assets/549c2256-a93f-4a6d-880c-6ad4c320bf83" />
 <img width="1122" height="590" alt="스크린샷 2026-02-18 101426" src="https://github.com/user-attachments/assets/9320acf4-4658-4630-9103-e609af6816ef" />
 <br><br>
