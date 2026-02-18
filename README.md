@@ -21,11 +21,13 @@ Cell Counting 관련 코드 정리
 
   
 - ✅ DT_peak_method
-<img width="4244" height="1355" alt="그림1" src="https://github.com/user-attachments/assets/b7f21a8d-6fc9-4626-88f8-a7c443b305a0" /><br><br>
+<img width="4244" height="1355" alt="그림1" src="https://github.com/user-attachments/assets/b7f21a8d-6fc9-4626-88f8-a7c443b305a0" />
+<img width="1463" height="988" alt="스크린샷 2026-02-18 100800" src="https://github.com/user-attachments/assets/a57babb9-e948-4a73-be2b-2b3d21709efb" /> <br><br>
 
   
 - ✅ Countour_method
-<img width="4196" height="1368" alt="그림3" src="https://github.com/user-attachments/assets/ceba599d-11a3-4096-8fc5-b6e550247c72" /><br><br>
+<img width="4196" height="1368" alt="그림3" src="https://github.com/user-attachments/assets/ceba599d-11a3-4096-8fc5-b6e550247c72" />
+<img width="1533" height="976" alt="스크린샷 2026-02-18 100652" src="https://github.com/user-attachments/assets/425bf68c-57df-472f-80b6-146c05c2aced" /> <br><br>
 
 ---
 
